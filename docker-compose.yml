@@ -1,22 +1,24 @@
 version: "2"
 services:
   ########## APPLICATIONS ##########
-  # send:
-  #   profiles:
-  #     - local
-  #   build:
-  #     context: ../send/
-  #     target: local
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ../send/src:/app/src
-  #   depends_on:
-  #     - redis
+  send:
+    profiles:
+      - local
+    build:
+      context: ../send/
+      dockerfile: Dockerfile.local
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../send/src:/usr/src/send/src
+    depends_on:
+      - redis
 
   ########## INFRASTRUCTURE ##########
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    profiles:
+      - infra
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -25,6 +27,8 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:latest
+    profiles:
+      - infra
     depends_on:
       - zookeeper
     ports:
@@ -39,6 +43,8 @@ services:
 
   redis:
     image: redis
+    profiles:
+      - infra
     ports:
       - "6379:6379"
 

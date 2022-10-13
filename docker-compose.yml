@@ -9,10 +9,27 @@ services:
       dockerfile: Dockerfile.local
     ports:
       - "3000:3000"
+    environment:
+      APP_ENV: docker
     volumes:
       - ../send/src:/usr/src/send/src
     depends_on:
       - redis
+      - kafka-init
+
+  consume:
+    profiles:
+      - local
+    build:
+      context: ../consume/
+      dockerfile: Dockerfile.local
+    environment:
+      APP_ENV: docker
+    volumes:
+      - ../consume/src:/usr/src/consume/src
+    depends_on:
+      - redis
+      - kafka-init
 
   ########## INFRASTRUCTURE ##########
   zookeeper:
@@ -40,6 +57,18 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    profiles:
+      - infra
+    depends_on:
+      - kafka
+    command:
+      - /bin/sh
+      - -c
+      - |
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic messages
 
   redis:
     image: redis
